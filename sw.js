@@ -1,5 +1,5 @@
 /* Bible Stories for All Ages service worker: caches the app shell so it opens with no internet. */
-const CACHE = "bible-stories-v1.2.4";
+const CACHE = "bible-stories-v1.2.5";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./bible-reader.js", "./kjv.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
