@@ -178,6 +178,7 @@ footer.foot{max-width:960px;margin:0 auto;padding:0 16px 30px;font-size:.8rem;co
   <nav class="tabs" aria-label="Main">
     <button data-act="nav" data-view="decks">Decks</button>
     <button data-act="nav" data-view="bible">Bible</button>
+    <button data-act="nav" data-view="prayers">Prayers</button>
     <button data-act="nav" data-view="library">Library</button>
     <button data-act="nav" data-view="import">Import</button>
     <button data-act="nav" data-view="ai">AI<span class="hide-xs"> Builder</span></button>
@@ -201,7 +202,7 @@ const BRAND = {
   byline: "by AnalyticsByShanikwa",
   url: "https://analyticsbyshanikwa.com",
   support: "hello@analyticsbyshanikwa.com",
-  version: "1.3.1",
+  version: "1.3.2",
   examLabel: "Timed challenge",
   correctMsg: "Great job! 🎉",
   courseWord: "Group",
@@ -1321,5 +1322,6 @@ window.addEventListener("beforeunload", e => { if (S.session && S.session.mode =
 })();
 </script>
 <script src="bible-reader.js"></script>
+<script src="prayers.js"></script>
 </body>
 </html>

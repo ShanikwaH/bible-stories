@@ -1,6 +1,6 @@
 /* Bible Stories for All Ages service worker: caches the app shell so it opens with no internet. */
-const CACHE = "bible-stories-v1.3.1";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./bible-reader.js", "./kjv.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png"];
+const CACHE = "bible-stories-v1.3.2";
+const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./bible-reader.js", "./kjv.json", "./prayers.js", "./prayers.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   // cache: "reload" skips the browser's HTTP cache, so a new version never re-caches old files.
