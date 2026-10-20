@@ -206,7 +206,7 @@ const BRAND = {
   byline: "by AnalyticsByShanikwa",
   url: "https://analyticsbyshanikwa.com",
   support: "hello@analyticsbyshanikwa.com",
-  version: "1.3.7",
+  version: "1.3.8",
   examLabel: "Timed challenge",
   correctMsg: "Great job! 🎉",
   courseWord: "Group",
@@ -216,7 +216,8 @@ const BRAND = {
   scenarioLabel: "Story-based questions (recommended)",
   speechRate: 0.92,
   autoSeed: true,
-  sampleButton: "Load the 60 starter Bible stories"
+  sampleButton: "Load the 60 starter Bible stories",
+  builtInLinks: "deck-links.json"
 };
 const APP_ID = "bible-stories-all-ages";
 
@@ -464,7 +465,7 @@ const isCorrect = (q, sel) => sel && sel.length === q.answer.length && sel.every
 
 /* ============ NAV & RENDER ============ */
 // Edition add-ons (e.g. the Bible reader in Bible Stories) register extra views and post-render hooks here.
-const EXTRA_VIEWS = {}, EXTRA_AFTER = [], BACKUP_KV = [];   // BACKUP_KV: ids of edition records in the "kv" store to include in backups
+const EXTRA_VIEWS = {}, EXTRA_AFTER = [], BACKUP_KV = [], EXTRA_IMPORTERS = {};   // EXTRA_IMPORTERS: {"format-name": async obj => …} for links that carry something other than decks   // BACKUP_KV: ids of edition records in the "kv" store to include in backups
 function nav(view) { stopSpeak(); if (S.session && view !== "session" && !S.session.ended && S.session.mode === "exam") { toast("Finish or exit the exam first."); return; } stopTimer(); S.view = view; if (view !== "session") S.session = null; render(); window.scrollTo(0, 0); }
 function render() {
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.view === S.view ? "page" : "false"));
@@ -850,7 +851,7 @@ function renderImport() {
       <strong>Drop quiz files here or tap to choose</strong>
       <p class="muted" style="margin:6px 0 0">.json (from any AI or this app) · .csv / .tsv (Excel, Google Sheets) · .txt / .md (simple text format)</p>
     </div>
-    <div class="field"><label for="pasteBox">…or paste here: a deck link, an AI's JSON reply, CSV rows, or plain-text questions</label>
+    <div class="field"><label for="pasteBox">…or paste here: a deck, prayer, or reading-plan link, an AI's JSON reply, CSV rows, or plain-text questions</label>
       <textarea id="pasteBox" placeholder="Q: Who built an ark before the great flood?
 A) Moses
 *B) Noah
@@ -929,8 +930,9 @@ function pickFiles(accept, cb) { const inp = $("#hiddenFile"); inp.value = ""; i
 // private deck can travel inside the link itself without being published anywhere.
 /* Deck links made inside the app: copy one, then paste it into Import › Paste & import in this app on any device
    (for example from Safari into the Home Screen app). The whole deck rides in the #fragment, which is never sent to a server. */
-async function deckLink(d) {
-  const raw = new TextEncoder().encode(JSON.stringify(JSON.parse(deckToJSON(d))));
+const deckLink = d => makeLink(JSON.parse(deckToJSON(d)));
+async function makeLink(obj) {   // any JSON (a deck, a reading plan, prayers) -> a link that Import › Paste & import understands
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
   const app = location.origin + location.pathname;
   if (typeof CompressionStream === "undefined") return app + "#import=" + bytesToB64url(raw);
   const gz = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
@@ -967,6 +969,7 @@ async function importFromLink(payload, fromAddressBar = true) {
       if (typeof DecompressionStream === "undefined") throw new Error("this browser is too old to open import links. Update it, or use Import → paste instead");
       text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
     } else text = new TextDecoder().decode(bytes);
+    if (await extraImport(text)) { if (!fromAddressBar) { const pb = $("#pasteBox"); if (pb) pb.value = ""; } return; }
     const decks = parseAny(text, "Shared deck.json");
     if (!(await reuseExisting(decks))) { toast("Kept your existing deck."); render(); return; }
     await importDecks(decks, "link");
@@ -975,9 +978,15 @@ async function importFromLink(payload, fromAddressBar = true) {
 }
 // Pasted text may be a whole import link (…#import=…). Home Screen apps keep their own storage, so pasting is how a link reaches them.
 const linkPayload = t => { const m = String(t).match(/#import=([A-Za-z0-9_\-%+/=\s]+)/); return m ? m[1].replace(/\s+/g, "") : null; };
+async function extraImport(text) {   // links and pasted JSON for prayers, reading plans, and other edition data
+  let obj; try { obj = JSON.parse(text); } catch (e) { return false; }
+  const fn = obj && EXTRA_IMPORTERS[obj.format]; if (!fn) return false;
+  await fn(obj); return true;
+}
 async function importPastedText(t) {
   if (!t || !t.trim()) { toast("Nothing to import. Copy a deck link or deck text first.", true); return; }
   const lp = linkPayload(t); if (lp) return importFromLink(lp, false);
+  if (await extraImport(t.trim())) { const pb = $("#pasteBox"); if (pb) pb.value = ""; return; }
   try { await importDecks(parseAny(t, ""), "pasted text"); } catch (e) { toast(e.message, true, 7000); }
 }
 
